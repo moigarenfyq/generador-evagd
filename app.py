@@ -247,10 +247,21 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 response = requests.post(url, json=payload, headers=headers)
                 response_json = response.json()
 
+                # Hacemos la petición web real
+                response = requests.post(url, json=payload, headers=headers)
+                response_json = response.json()
+
                 # Comprobamos si Google se queja
                 if response.status_code != 200:
                     st.error(f"⚠️ Error directo del servidor de Google (Código {response.status_code}):")
                     st.json(response_json)
+                    
+                    st.warning("🔍 ¡Interrogando a Google! Solicitando la lista exacta de modelos permitidos para esta cuenta...")
+                    url_lista = f"https://generativelanguage.googleapis.com/v1/models?key={api_key_limpia}"
+                    respuesta_lista = requests.get(url_lista)
+                    
+                    st.info("📋 CÓPIAME LOS NOMBRES DE LOS MODELOS QUE SALEN AQUÍ DEBAJO:")
+                    st.json(respuesta_lista.json())
                     st.stop()
 
                 # Extraemos la respuesta del texto de la estructura JSON de Google
