@@ -4,7 +4,7 @@ import requests
 import pypdf
 
 # Usamos el modelo estándar
-MODELO = "gemini-1.5-flash"
+MODELO = "gemini-3.5-flash"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
@@ -227,26 +227,12 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 {prompt_especifico}
                 """
 
-                # --- CONEXIÓN DIRECTA POR HTTP LIMPIA CON MODELO UNIVERSAL ---
-                api_key_limpia = str(api_key).strip()
-                
                 # --- CONEXIÓN DIRECTA POR HTTP LIMPIA ---
                 api_key_limpia = str(api_key).strip()
+                modelo_limpio = str(MODELO).strip()
                 
-                # Apuntamos al modelo moderno y estándar mediante la versión estable v1
-                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key_limpia}"
+                url = f"https://generativelanguage.googleapis.com/v1/models/{modelo_limpio}:generateContent?key={api_key_limpia}"
                 
-                headers = {"Content-Type": "application/json"}
-                payload = {
-                    "contents": [{
-                        "parts": [{"text": prompt_base}]
-                    }]
-                }
-
-                # Hacemos la petición web real
-                response = requests.post(url, json=payload, headers=headers)
-                response_json = response.json()
-
                 # Hacemos la petición web real
                 response = requests.post(url, json=payload, headers=headers)
                 response_json = response.json()
@@ -255,6 +241,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 if response.status_code != 200:
                     st.error(f"⚠️ Error directo del servidor de Google (Código {response.status_code}):")
                     st.json(response_json)
+                    st.stop()
                     
                     st.warning("🔍 ¡Interrogando a Google! Solicitando la lista exacta de modelos permitidos para esta cuenta...")
                     url_lista = f"https://generativelanguage.googleapis.com/v1/models?key={api_key_limpia}"
