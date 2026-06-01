@@ -229,7 +229,12 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
 
                 # --- CONEXIÓN DIRECTA POR HTTP PASANDO DE LIBRERÍAS DE GOOGLE ---
                 # Forzamos la URL oficial v1 estable directamente al modelo flash
-                url = f"[https://generativelanguage.googleapis.com/v1/models/](https://generativelanguage.googleapis.com/v1/models/){MODELO}:generateContent?key={api_key}"
+                # --- CONEXIÓN DIRECTA POR HTTP LIMPIA ---
+                # Aplicamos .strip() para eliminar cualquier espacio invisible que rompa la conexión
+                api_key_limpia = str(api_key).strip()
+                modelo_limpio = str(MODELO).strip()
+                
+                url = f"https://generativelanguage.googleapis.com/v1/models/{modelo_limpio}:generateContent?key={api_key_limpia}"
                 
                 headers = {"Content-Type": "application/json"}
                 payload = {
