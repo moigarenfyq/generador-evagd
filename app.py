@@ -4,7 +4,7 @@ import google.generativeai as genai
 import pypdf
 import os
 
-MODELO = "models/gemini-1.5-pro"
+MODELO = "models/gemini-1.5-flash"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
