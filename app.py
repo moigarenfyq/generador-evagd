@@ -145,12 +145,14 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 
                 api_key = st.secrets["GEMINI_API_KEY"]
                 
-                # Configurar librería clásica forzando la versión API estable v1
-                import google.generativeai.types as types
-                genai.configure(api_key=api_key, client_options={"api_version": "v1"})
+                # Configurar librería clásica con la clave de API
+                genai.configure(api_key=api_key)
                 
-                # Usamos el identificador del modelo
-                model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+                # Forzamos al modelo a comunicarse usando el canal estable
+                model = genai.GenerativeModel(
+                    model_name="gemini-1.5-flash",
+                    generation_config={"response_mime_type": "text/plain"}
+                )
 
                 # EXTRAER TEXTO DE LOS APUNTES
                 reader_apuntes = pypdf.PdfReader(uploaded_apuntes)
