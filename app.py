@@ -4,7 +4,7 @@ import google.generativeai as genai
 import pypdf
 import os
 
-MODELO = "gemini-1.5-pro"
+MODELO = "models/gemini-1.5-pro"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
@@ -146,7 +146,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
 
                 # Configurar el acceso gratuito de AI Studio
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel(model_name=MODELO)
+                model = genai.GenerativeModel(MODELO)
 
                 # EXTRAER TEXTO DE LOS APUNTES EN PDF LOCALMENTE
                 reader_apuntes = pypdf.PdfReader(uploaded_apuntes)
