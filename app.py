@@ -4,7 +4,7 @@ import google.generativeai as genai
 import pypdf
 
 # Dejamos Flash que es el estándar y gratuito
-MODELO = "gemini-1.5-flash"
+MODELO = "gemini-1.5-flash-latest"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
