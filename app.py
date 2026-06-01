@@ -1,10 +1,10 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import google.generativeai as genai
+from google import genai
 import pypdf
 
-# Dejamos Flash que es el estándar y gratuito
-MODELO = "gemini-1.5-flash-latest"
+# El modelo correcto y universal
+MODELO = "gemini-1.5-flash"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
@@ -138,21 +138,15 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
             f"**{MODELO}** está analizando los documentos y estructurando el contenido pedagógico..."
         ):
             try:
-                # --- FORMA CORRECTA PARA STREAMLIT CLOUD ---
+                # Comprobamos los Secrets de Streamlit
                 if "GEMINI_API_KEY" not in st.secrets:
                     st.error("No se encontró la clave `GEMINI_API_KEY` en las propiedades secretas de Streamlit.")
                     st.stop()
                 
                 api_key = st.secrets["GEMINI_API_KEY"]
                 
-                # Configurar librería clásica con la clave de API
-                genai.configure(api_key=api_key)
-                
-                # Forzamos al modelo a comunicarse usando el canal estable
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    generation_config={"response_mime_type": "text/plain"}
-                )
+                # Inicialización con la nueva librería oficial libre de errores v1beta
+                client = genai.Client(api_key=api_key)
 
                 # EXTRAER TEXTO DE LOS APUNTES
                 reader_apuntes = pypdf.PdfReader(uploaded_apuntes)
@@ -236,8 +230,11 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 {prompt_especifico}
                 """
 
-                # EJECUCIÓN
-                response = model.generate_content(prompt_base)
+                # EJECUCIÓN CON LA NUEVA API UNIVERSAL
+                response = client.models.generate_content(
+                    model=MODELO,
+                    contents=prompt_base,
+                )
 
                 resultado_limpio = (
                     response.text.replace("```html", "")
@@ -291,5 +288,4 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     """)
 
             except Exception as e:
-                # Quitamos el filtro engañoso para ver el error real del sistema
                 st.error(f"⚠️ **Error técnico real devuelto por el sistema:** {e}")
