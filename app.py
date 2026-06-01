@@ -1,9 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
-from google import genai
+import requests
 import pypdf
 
-# El modelo correcto y universal
+# Usamos el modelo estándar
 MODELO = "gemini-1.5-flash"
 
 st.set_page_config(
@@ -16,7 +16,7 @@ Transforma tus apuntes en PDF en recursos listos para importar directamente en M
 alineados (opcionalmente) con tus Situaciones de Aprendizaje.
 """)
 
-st.caption(f"🤖 Modelo activo: `{MODELO}`")
+st.caption(f"🤖 Modelo activo mediante conexión directa: `{MODELO}`")
 
 st.divider()
 
@@ -135,7 +135,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
         st.error("Es obligatorio subir un archivo de apuntes en PDF.")
     else:
         with st.spinner(
-            f"**{MODELO}** está analizando los documentos y estructurando el contenido pedagógico..."
+            f"**{MODELO}** está procesando los documentos mediante pasarela directa v1..."
         ):
             try:
                 # Comprobamos los Secrets de Streamlit
@@ -144,9 +144,6 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     st.stop()
                 
                 api_key = st.secrets["GEMINI_API_KEY"]
-                
-                # Inicialización con la nueva librería oficial libre de errores v1beta
-                client = genai.Client(api_key=api_key)
 
                 # EXTRAER TEXTO DE LOS APUNTES
                 reader_apuntes = pypdf.PdfReader(uploaded_apuntes)
@@ -230,14 +227,37 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 {prompt_especifico}
                 """
 
-                # EJECUCIÓN CON LA NUEVA API UNIVERSAL
-                response = client.models.generate_content(
-                    model=MODELO,
-                    contents=prompt_base,
-                )
+                # --- CONEXIÓN DIRECTA POR HTTP PASANDO DE LIBRERÍAS DE GOOGLE ---
+                # Forzamos la URL oficial v1 estable directamente al modelo flash
+                url = f"[https://generativelanguage.googleapis.com/v1/models/](https://generativelanguage.googleapis.com/v1/models/){MODELO}:generateContent?key={api_key}"
+                
+                headers = {"Content-Type": "application/json"}
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": prompt_base}]
+                    }]
+                }
+
+                # Hacemos la petición web real
+                response = requests.post(url, json=payload, headers=headers)
+                response_json = response.json()
+
+                # Comprobamos si Google se queja
+                if response.status_code != 200:
+                    st.error(f"⚠️ Error directo del servidor de Google (Código {response.status_code}):")
+                    st.json(response_json)
+                    st.stop()
+
+                # Extraemos la respuesta del texto de la estructura JSON de Google
+                try:
+                    texto_generado = response_json['candidates'][0]['content']['parts'][0]['text']
+                except KeyError:
+                    st.error("Google respondió, pero la estructura del resultado no fue la esperada:")
+                    st.json(response_json)
+                    st.stop()
 
                 resultado_limpio = (
-                    response.text.replace("```html", "")
+                    texto_generado.replace("```html", "")
                     .replace("```xml", "")
                     .replace("```gift", "")
                     .replace("```", "")
@@ -288,4 +308,4 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     """)
 
             except Exception as e:
-                st.error(f"⚠️ **Error técnico real devuelto por el sistema:** {e}")
+                st.error(f"⚠️ **Error inesperado en la aplicación:** {e}")
