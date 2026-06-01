@@ -2,9 +2,9 @@ import streamlit as st
 import streamlit.components.v1 as components
 import google.generativeai as genai
 import pypdf
-import os
 
-MODELO = "models/gemini-1.5-flash"
+# Dejamos Flash que es el estándar y gratuito
+MODELO = "gemini-1.5-flash"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
@@ -16,7 +16,7 @@ Transforma tus apuntes en PDF en recursos listos para importar directamente en M
 alineados (opcionalmente) con tus Situaciones de Aprendizaje.
 """)
 
-st.caption(f"🤖 Modelo activo a través de API clásica: `{MODELO}`")
+st.caption(f"🤖 Modelo activo: `{MODELO}`")
 
 st.divider()
 
@@ -138,17 +138,18 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
             f"**{MODELO}** está analizando los documentos y estructurando el contenido pedagógico..."
         ):
             try:
-                # OBTENER LA API KEY DESDE EL CANDADO DE REPLIT
-                api_key = os.environ.get("GEMINI_API_KEY")
-                if not api_key:
-                    st.error("No se encontró la clave `GEMINI_API_KEY` en los Secrets de Replit.")
+                # --- FORMA CORRECTA PARA STREAMLIT CLOUD ---
+                if "GEMINI_API_KEY" not in st.secrets:
+                    st.error("No se encontró la clave `GEMINI_API_KEY` en las propiedades secretas de Streamlit.")
                     st.stop()
-
-                # Configurar el acceso gratuito de AI Studio
+                
+                api_key = st.secrets["GEMINI_API_KEY"]
+                
+                # Configurar librería clásica
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel(MODELO)
+                model = genai.GenerativeModel(model_name=MODELO)
 
-                # EXTRAER TEXTO DE LOS APUNTES EN PDF LOCALMENTE
+                # EXTRAER TEXTO DE LOS APUNTES
                 reader_apuntes = pypdf.PdfReader(uploaded_apuntes)
                 texto_apuntes = ""
                 for page in reader_apuntes.pages:
@@ -161,7 +162,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     - Usa obligatoriamente la etiqueta <h1> para los títulos de los Capítulos principales.
                     - Usa la etiqueta <h2> para los Subcapítulos.
                     - Al final de cada sección, añade 3 preguntas de autoevaluación utilizando la etiqueta HTML <details> para ocultar las respuestas y el feedback (retroalimentación).
-                    Devuelve EXCLUSIVAMENTE el código HTML. No incluyas explicaciones en texto plano, ni introducciones antes del código, ni marcas de markdown del tipo ```html.
+                    Devuelve EXCLUSIVAMENTE el código HTML. No incluyas marcas de markdown como ```html ni texto explicativo antes o después.
                     """
                     extension = "html"
                     mimetype = "text/html"
@@ -171,7 +172,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     Formato de salida requerido: Un archivo en formato Moodle XML estricto y válido para importar preguntas y contenidos en una Lección de Moodle.
                     - Crea las páginas de contenido con la teoría.
                     - Genera preguntas de opción múltiple (multichoice) bajo el estándar XML de Moodle, incluyendo retroalimentaciones (feedback) específicas para respuestas correctas e incorrectas.
-                    Devuelve EXCLUSIVAMENTE el código XML de Moodle estructurado. No agregues texto de saludo, explicaciones ni marcas de markdown del tipo ```xml.
+                    Devuelve EXCLUSIVAMENTE el código XML de Moodle estructurado. No agregues texto de saludo o explicaciones fuera del bloque de código XML ni marcas ```xml.
                     """
                     extension = "xml"
                     mimetype = "text/xml"
@@ -195,28 +196,29 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     ~Valencia #Incorrecto.
                     }
                     Genera al menos 15 preguntas variadas cubriendo todos los temas del documento.
-                    Devuelve EXCLUSIVAMENTE el bloque GIFT. Sin explicaciones ni texto adicional fuera del formato, ni marcas de markdown del tipo ```gift.
+                    Devuelve EXCLUSIVAMENTE el bloque GIFT. Sin marcas ```gift ni texto explicativo o adicional fuera del formato.
                     """
                     extension = "gift.txt"
                     mimetype = "text/plain"
 
-                # EXTRAER TEXTO DE LA SITUACIÓN DE APRENDIZAJE LOCALMENTE SI EXISTE
+                # EXTRAER TEXTO DE LA SA SI EXISTE
+                texto_sa_instruccion = ""
                 if uploaded_sa:
                     reader_sa = pypdf.PdfReader(uploaded_sa)
                     texto_sa = ""
                     for page in reader_sa.pages:
                         texto_sa += page.extract_text() or ""
-
+                    
                     texto_sa_instruccion = f"Es OBLIGATORIO que alinees y vincules los contenidos teóricos, el enfoque y el vocabulario con los criterios de evaluación y competencias descritos en este texto de la Situación de Aprendizaje:\n{texto_sa}"
                 else:
                     texto_sa_instruccion = "Desarrolla los contenidos con un enfoque competencial e integrado acorde al currículo de Canarias."
 
-                # UNIFICACIÓN DEL PROMPT BASE
+                # PROMPT FINAL UNIFICADO
                 prompt_base = f"""
                 Actúas como un diseñador instruccional de e-learning y asesor pedagógico experto en el currículo de la Consejería de Educación de Canarias.
-
+                
                 Debes transformar el siguiente texto de apuntes en bruto en un recurso educativo para la materia de {materia} de {nivel}.
-
+                
                 TEXTO DE APUNTES:
                 ---
                 {texto_apuntes}
@@ -229,7 +231,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 {prompt_especifico}
                 """
 
-                # EJECUCIÓN DIRECTA CON LA LIBRERÍA CLÁSICA
+                # EJECUCIÓN
                 response = model.generate_content(prompt_base)
 
                 resultado_limpio = (
@@ -240,7 +242,7 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     .strip()
                 )
 
-                st.success(f"¡Recurso generado con éxito por `{MODELO}`!")
+                st.success("¡Recurso generado con éxito!")
 
                 # --- BOTÓN DE DESCARGA ---
                 nombre_archivo = f"recurso_{materia.lower().replace(' ', '_')}_{nivel.lower().replace(' ', '_')}.{extension}"
@@ -252,13 +254,13 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     use_container_width=True,
                 )
 
-                # --- VISTA PREVIA (solo para HTML) ---
+                # --- VISTA PREVIA ---
                 if "Libro" in tipo_recurso:
                     st.divider()
                     with st.expander("👁️ Vista previa del HTML generado", expanded=True):
                         components.html(resultado_limpio, height=600, scrolling=True)
 
-                # --- INSTRUCCIONES DE IMPORTACIÓN ---
+                # --- INSTRUCCIONES ---
                 st.divider()
                 st.info("💡 **¿Cómo subirlo a EVAGD?**")
                 if "Libro" in tipo_recurso:
@@ -284,19 +286,5 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                     """)
 
             except Exception as e:
-                error_str = str(e)
-                if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                    st.error("⚠️ **Cuota de API agotada**")
-                    st.markdown("""
-                    Tu clave de API de Google ha alcanzado el límite de solicitudes gratuitas.
-                    
-                    **¿Qué puedes hacer?**
-                    - **Espera unos minutos** e inténtalo de nuevo (el límite se renueva por minuto/día).
-                    - **Activa la facturación** en [Google Cloud Console](https://console.cloud.google.com/billing) para obtener cuota ampliada. El uso habitual tiene coste muy bajo.
-                    """)
-                elif "NOT_FOUND" in error_str or "404" in error_str:
-                    st.error(
-                        f"⚠️ **Modelo no disponible**: `{MODELO}` no está accesible con tu clave de API actual en este entorno. Revisa la configuración de tu cuenta."
-                    )
-                else:
-                    st.error(f"⚠️ **Error al conectar con Gemini:** {e}")
+                # Quitamos el filtro engañoso para ver el error real del sistema
+                st.error(f"⚠️ **Error técnico real devuelto por el sistema:** {e}")
