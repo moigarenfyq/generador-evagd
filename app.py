@@ -4,7 +4,7 @@ import requests
 import pypdf
 
 # Usamos el modelo estándar
-MODELO = "gemini-1.5-flash"
+MODELO = "gemini-1.0-pro"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
@@ -227,11 +227,11 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 {prompt_especifico}
                 """
 
-                # --- CONEXIÓN DIRECTA POR HTTP LIMPIA ---
+                # --- CONEXIÓN DIRECTA POR HTTP LIMPIA CON MODELO UNIVERSAL ---
                 api_key_limpia = str(api_key).strip()
                 
-                # Forzamos v1beta en la URL y usamos la coletilla -latest para asegurar compatibilidad
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key_limpia}"
+                # Apuntamos al modelo gemini-1.0-pro que no sufre restricciones de cuenta corporativa/institucional
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={api_key_limpia}"
                 
                 headers = {"Content-Type": "application/json"}
                 payload = {
