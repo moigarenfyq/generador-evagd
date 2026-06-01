@@ -227,14 +227,11 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 {prompt_especifico}
                 """
 
-                # --- CONEXIÓN DIRECTA POR HTTP PASANDO DE LIBRERÍAS DE GOOGLE ---
-                # Forzamos la URL oficial v1 estable directamente al modelo flash
                 # --- CONEXIÓN DIRECTA POR HTTP LIMPIA ---
-                # Aplicamos .strip() para eliminar cualquier espacio invisible que rompa la conexión
                 api_key_limpia = str(api_key).strip()
-                modelo_limpio = str(MODELO).strip()
                 
-                url = f"https://generativelanguage.googleapis.com/v1/models/{modelo_limpio}:generateContent?key={api_key_limpia}"
+                # Forzamos v1beta en la URL y usamos la coletilla -latest para asegurar compatibilidad
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key_limpia}"
                 
                 headers = {"Content-Type": "application/json"}
                 payload = {
