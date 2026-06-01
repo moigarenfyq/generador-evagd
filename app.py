@@ -4,7 +4,7 @@ import requests
 import pypdf
 
 # Usamos el modelo estándar
-MODELO = "gemini-3.5-flash"
+MODELO = "gemini-2.5-flash"
 
 st.set_page_config(
     page_title="Generador de Recursos EVAGD", page_icon="🏫", layout="centered"
