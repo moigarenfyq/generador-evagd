@@ -233,6 +233,14 @@ if st.button("🚀 Generar Recurso Educativo", type="primary"):
                 
                 url = f"https://generativelanguage.googleapis.com/v1/models/{modelo_limpio}:generateContent?key={api_key_limpia}"
                 
+                # Definimos el contenido (payload) y el formato (headers) antes de enviarlo
+                headers = {"Content-Type": "application/json"}
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": prompt_base}]
+                    }]
+                }
+                
                 # Hacemos la petición web real
                 response = requests.post(url, json=payload, headers=headers)
                 response_json = response.json()
